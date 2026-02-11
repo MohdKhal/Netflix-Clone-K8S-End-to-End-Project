@@ -27,7 +27,7 @@ variable "ec2_instance_count" {
 }
 
 variable "ec2_instance_type" {
-  type = string
+  type = list(string)
 }
 
 variable "ec2_volume_size" {
