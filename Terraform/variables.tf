@@ -1,16 +1,39 @@
-variable "aws-region" {}
-variable "env" {}
-variable "cidr-block" {}
-variable "pub-subnet-count" {}
-variable "pub-cidr-block" {
+variable "aws_region" {
+  type = string
+}
+
+variable "env" {
+  type = string
+}
+
+variable "cidr_block" {
+  type = string
+}
+
+variable "pub_subnet_count" {
+  type = number
+}
+
+variable "pub_cidr_block" {
   type = list(string)
 }
-variable "pub-availability-zone" {
+
+variable "pub_availability_zone" {
   type = list(string)
 }
-variable "ec2-instance-count" {}
+
+variable "ec2_instance_count" {
+  type = number
+}
+
 variable "ec2_instance_type" {
-  type = list(string)
+  type = string
 }
-variable "ec2_volume_size" {}
-variable "ec2_volume_type" {}
+
+variable "ec2_volume_size" {
+  type = number
+}
+
+variable "ec2_volume_type" {
+  type = string
+}
