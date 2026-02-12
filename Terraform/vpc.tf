@@ -21,11 +21,11 @@ resource "aws_internet_gateway" "igw" {
 
   tags = {
     Name = "${local.org}-${local.project}-${local.env}-igw"
-    Env  = var.env
+    Env  = local.env
   }
 }
 
-resource "aws_subnet" "public-subnet" {
+resource "aws_subnet" "public_subnet" {
   count                   = var.pub_subnet_count
   vpc_id                  = aws_vpc.vpc.id
   cidr_block              = element(var.pub_cidr_block, count.index)
@@ -34,11 +34,11 @@ resource "aws_subnet" "public-subnet" {
 
   tags = {
     Name = "${local.org}-${local.project}-${local.env}-public-subnet-${count.index + 1}"
-    Env  = var.env
+    Env  = local.env
   }
 }
 
-resource "aws_route_table" "public-rt" {
+resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.vpc.id
 
   route {
@@ -48,17 +48,17 @@ resource "aws_route_table" "public-rt" {
 
   tags = {
     Name = "${local.org}-${local.project}-${local.env}-public-route-table"
-    Env  = var.env
+    Env  = local.env
   }
 }
 
-resource "aws_route_table_association" "public-rta" {
+resource "aws_route_table_association" "public_rta" {
   count          = var.pub_subnet_count
-  route_table_id = aws_route_table.public-rt.id
-  subnet_id      = aws_subnet.public-subnet[count.index].id
+  route_table_id = aws_route_table.public_rt.id
+  subnet_id      = aws_subnet.public_subnet[count.index].id
 }
 
-resource "aws_security_group" "default-ec2-sg" {
+resource "aws_security_group" "default_ec2_sg" {
   name        = "${local.org}-${local.project}-${local.env}-sg"
   description = "Default Security Group"
   vpc_id      = aws_vpc.vpc.id
