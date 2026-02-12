@@ -1,6 +1,5 @@
 aws_region = "us-east-1"
 env = "dev"
-
 cidr_block = "10.0.0.0/16"
 
 pub_subnet_count = 4
@@ -21,9 +20,9 @@ pub_availability_zone = [
 ec2_instance_count = 4
 ec2_instance_type = [
   "m7i-flex.large",
-  "t3.micro",
-  "t3.micro",
-  "t3.micro"
+  "c7i-flex.large",
+  "c7i-flex.large",
+  "c7i-flex.large"
 ]
 
 ec2_volume_size = 50
