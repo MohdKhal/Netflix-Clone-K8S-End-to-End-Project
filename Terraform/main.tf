@@ -22,18 +22,19 @@ resource "aws_instance" "ec2" {
     volume_type = var.ec2_volume_type
   }
 
-  user_data = count.index == 0 ? <<-EOT
-#!/bin/bash
-apt update -y
-apt install -y openjdk-17-jdk wget
-wget -O /home/ubuntu/jenkins.war https://get.jenkins.io/war-stable/latest/jenkins.war
-chown ubuntu:ubuntu /home/ubuntu/jenkins.war
-nohup java -Xms256m -Xmx512m -jar /home/ubuntu/jenkins.war --httpPort=8080 > /home/ubuntu/jenkins.log 2>&1 &
-EOT
-  : null
+  user_data = count.index == 0 ? <<-EOF
+              #!/bin/bash
+              apt update -y
+              apt install -y openjdk-17-jdk wget
+
+              wget -O /home/ubuntu/jenkins.war https://get.jenkins.io/war-stable/latest/jenkins.war
+              chown ubuntu:ubuntu /home/ubuntu/jenkins.war
+
+              nohup java -Xms256m -Xmx512m -jar /home/ubuntu/jenkins.war --httpPort=8080 > /home/ubuntu/jenkins.log 2>&1 &
+              EOF
+              : null
 
   tags = {
     Name = "${local.org}-${local.project}-${local.env}-${local.instance_names[count.index]}"
-    Env  = local.env
   }
 }
