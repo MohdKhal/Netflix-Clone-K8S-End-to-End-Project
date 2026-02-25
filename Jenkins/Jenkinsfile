@@ -91,8 +91,8 @@ pipeline{
                 dir('Application-Code') {
                     script{
                        withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){   
-                           sh "docker tag netflix avian19/netflix:latest "
-                           sh "docker push avian19/netflix:latest "
+                           sh "docker tag netflix mohdibrahimk/netflix:latest "
+                           sh "docker push mohdibrahimk/netflix:latest "
                         }
                     }
                 }
