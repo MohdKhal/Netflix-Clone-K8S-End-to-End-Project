@@ -125,7 +125,7 @@ pipeline{
                                 currentBuild.result == 'FAILURE' ? '#ff0000' : '#daa038'
     
                 slackSend(
-                    channel: '#devops-alerts',
+                    channel: '#all-azure-vm',
                     color: colorCode,
                     message: """
                     *🚀 Jenkins Build Notification*
