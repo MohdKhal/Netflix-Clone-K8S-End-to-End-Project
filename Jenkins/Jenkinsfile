@@ -20,6 +20,7 @@ pipeline{
         stage('Install Dependencies') {
             steps {
                 dir('Application-Code') {
+                    // Install project dependencies (needed for OWASP + build)
                     sh 'npm install'
                 }
             }
@@ -28,50 +29,42 @@ pipeline{
             steps {
                 dir('Application-Code') {
                     withSonarQubeEnv('sonar-server') {
-                        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                            sh '''
-                            echo "🔍 Starting SonarQube Analysis..."
-                            npx @sonar/scan \
-                            -Dsonar.projectKey=NetflixClone \
-                            -Dsonar.projectName=NetflixClone \
-                            -Dsonar.sources=src \
-                            -Dsonar.language=ts \
-                            -Dsonar.exclusions=dist/**,node_modules/**,public/** \
-                            -Dsonar.host.url=http://44.202.250.252:9000 \
-                            -Dsonar.token=$SONAR_TOKEN
-                            '''
-                        }
+                        // Run SonarQube scanner using npx (no global install)
+                        sh '''
+                        echo "🔍 Starting SonarQube Analysis..."
+                        npx @sonar/scan \
+                        -Dsonar.projectKey=NetflixClone \
+                        -Dsonar.projectName=NetflixClone \
+                        -Dsonar.sources=src \
+                        -Dsonar.language=ts \
+                        -Dsonar.exclusions=dist/**,node_modules/**,public/** \
+                        -Dsonar.host.url=$SONAR_HOST_URL \
+                        -Dsonar.login=$SONAR_AUTH_TOKEN
+                        '''
                     }
                 }
             }
         }
         stage("Quality Gate") {
             steps {
-                script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
-                }
-            } 
-        }
+                    script {
+                        waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
+                    }
+                } 
+            }
         stage('OWASP Dependency Check') {
             steps {
                 dir('Application-Code') {
-                    script {
-                        try {
-                            echo "🔒 Running OWASP Dependency Check..."
-                            dependencyCheck additionalArguments: '--scan ./ --format XML --out . --disableRetireJS --disableNodeAudit', odcInstallation: 'owasp-dp-check'
-                            dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-                        } catch (Exception e) {
-                            echo "⚠️ OWASP Dependency Check failed but continuing pipeline"
-                            currentBuild.result = 'UNSTABLE'
-                        }
-                    }
+                    echo "🔒 Running OWASP Dependency Check..."
+                    dependencyCheck additionalArguments: '--scan ./ --format XML --out .', odcInstallation: 'owasp-dp-check'
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
                 }
             }
         }
         stage('TRIVY FS SCAN') {
             steps {
                 dir('Application-Code') {
-                    sh "trivy fs . > trivyfs.txt || true"
+                    sh "trivy fs . > trivyfs.txt"
                 }
             }
         }
@@ -80,6 +73,7 @@ pipeline{
                 dir('Application-Code') {
                     script{
                        withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){   
+                           
                            withCredentials([string(credentialsId: 'tmdb-api', variable: 'TMDB_API_KEY')]) {
                                 sh """
                                     docker build \
@@ -106,7 +100,7 @@ pipeline{
         }
         stage("TRIVY Image Scan"){
             steps{
-                sh "trivy image mohdibrahimk/netflix:latest > trivyimage.txt || true" 
+                sh "trivy image mohdibrahimk/netflix:latest > trivyimage.txt" 
             }
         }
         stage('Deploy to Kubernetes') {
@@ -129,10 +123,6 @@ pipeline{
             script {
                 def colorCode = currentBuild.result == 'SUCCESS' ? '#2eb886' : 
                                 currentBuild.result == 'FAILURE' ? '#ff0000' : '#daa038'
-                
-                def statusMessage = currentBuild.result == 'SUCCESS' ? '✅ All steps completed successfully!' : 
-                                   currentBuild.result == 'FAILURE' ? '❌ Build failed. Please check logs.' : 
-                                   '⚠️ Build completed with issues (OWASP scan failed)'
     
                 slackSend(
                     channel: '#all-azure-vm',
@@ -144,7 +134,9 @@ pipeline{
                     *Status:* *${currentBuild.result}*
                     *URL:* <${env.BUILD_URL}|Open Build>
     
-                    ${statusMessage}
+                    ${currentBuild.result == 'SUCCESS' ? '✅ All steps completed successfully!' : 
+                    currentBuild.result == 'FAILURE' ? '❌ Build failed. Please check logs.' : 
+                    '⚠️ Build is unstable or aborted.'}
                     """.stripIndent()
                 )
             }
